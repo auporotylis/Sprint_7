@@ -1,9 +1,10 @@
+import io.qameta.allure.Description;
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.apache.http.HttpStatus.*;
 import static org.hamcrest.Matchers.equalTo;
 
 public class CreateCourierTest {
@@ -22,7 +23,6 @@ public class CreateCourierTest {
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru";
         courierLogin = "CourierLogin" + System.currentTimeMillis();
         courierPass = "password123";
     }
@@ -32,7 +32,7 @@ public class CreateCourierTest {
         if (courierLogin != null && courierPass != null) {
             String idCourier = Steps.loginCourier(new LoginCourier(courierLogin, courierPass)).then()
                     .log().all()
-                    .statusCode(200)
+                    .statusCode(SC_OK)
                     .extract()
                     .path(paramId).toString();
             Steps.deleteCourier(idCourier);
@@ -41,53 +41,57 @@ public class CreateCourierTest {
 
     @Test
     @DisplayName("Создание курьера")
-    public void createNewCourier() {
+    @Description("Проверка успешного создания курьера с набором валидных данных")
+    public void createNewCourierTest() {
         CreateCourier courier = new CreateCourier(courierLogin, courierPass, firstName);
         Steps.creatingCourier(courier)
                 .then()
                 .log().all()
-                .statusCode(201)
+                .statusCode(SC_CREATED)
                 .body(paramOk, equalTo(true));
     }
 
     @Test
     @DisplayName("Нельзя создать двух одинаковых курьеров")
-    public void cannotCreateDuplicateCourier() {
+    @Description("Проверка возникновения ошибки при попытке создать курьера с уже существующим набором валидных данных")
+    public void cannotCreateDuplicateCourierTest() {
         CreateCourier courier = new CreateCourier(courierLogin, courierPass, firstName);
         Steps.creatingCourier(courier)
                 .then()
                 .log().all()
-                .statusCode(201)
+                .statusCode(SC_CREATED)
                 .body("ok", equalTo(true));
 
         Steps.creatingCourier(courier)
                 .then()
                 .log().all()
-                .statusCode(409)
+                .statusCode(SC_CONFLICT)
                 .body(paramMessage, equalTo(loginError));
     }
 
     @Test
     @DisplayName("Нельзя создать курьера без логина")
-    public void cannotCreateCourierWithoutLogin() {
+    @Description("Проверка возникновения ошибки при попытке создать курьера без логина")
+    public void cannotCreateCourierWithoutLoginTest() {
         courierLogin = null;
         CreateCourier courier = new CreateCourier(courierLogin, courierPass, firstName);
         Steps.creatingCourier(courier)
                 .then()
                 .log().all()
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .body(paramMessage, equalTo(notEnoughDataError));
     }
 
     @Test
     @DisplayName("Нельзя создать курьера без пароля")
-    public void cannotCreateCourierWithoutPassword() {
+    @Description("Проверка возникновения ошибки при попытке создать курьера без пароля")
+    public void cannotCreateCourierWithoutPasswordTest() {
         courierPass = null;
         CreateCourier courier = new CreateCourier(courierLogin, courierPass, firstName);
         Steps.creatingCourier(courier)
                 .then()
                 .log().all()
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .body(paramMessage, equalTo(notEnoughDataError));
     }
 }

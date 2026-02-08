@@ -6,20 +6,20 @@ import static io.restassured.RestAssured.given;
 public class Steps {
     @Step("Создание курьера")
     public static Response creatingCourier(CreateCourier courier) {
-        return given().log().all()
-                .header("Content-type", "application/json")
+        return given()
+                .spec(RestAssuredSpecs.requestSpec)
                 .body(courier)
                 .when()
-                .post("/api/v1/courier");
+                .post(Endpoints.courier);
     }
 
     @Step("Логин курьера")
     public static Response loginCourier(LoginCourier courier) {
-        return given().log().all()
-                .header("Content-type", "application/json")
+        return given()
+                .spec(RestAssuredSpecs.requestSpec)
                 .body(courier)
                 .when()
-                .post("/api/v1/courier/login");
+                .post(Endpoints.logInCourier);
     }
 
     @Step("Получение id курьера")
@@ -34,23 +34,34 @@ public class Steps {
     @Step("Удаление курьера")
     public static void deleteCourier(String idCourier) {
         given()
+                .spec(RestAssuredSpecs.requestSpec)
                 .when()
-                .delete("/api/v1/courier/" + idCourier);
+                .delete(Endpoints.courier + "/" + idCourier);
     }
 
     @Step("Создание заказа")
     public static Response createOrder(CreateOrder order) {
-        return given().log().all()
-                .header("Content-type", "application/json")
+        return given()
+                .spec(RestAssuredSpecs.requestSpec)
                 .body(order)
                 .when()
-                .post("/api/v1/orders");
+                .post(Endpoints.orders);
     }
 
     @Step("Получение списка заказов")
     public static Response getOrderList() {
-        return given().log().all()
+        return given()
+                .spec(RestAssuredSpecs.requestSpec)
                 .when()
-                .get("/api/v1/orders");
+                .get(Endpoints.orders);
+    }
+
+    @Step("Отмена заказа")
+    public static void cancelOrder(String track) {
+        given()
+                .spec(RestAssuredSpecs.requestSpec)
+                .body("{\"track\": \"" + track + "\"}")
+                .when()
+                .put(Endpoints.cancelOrder);
     }
 }

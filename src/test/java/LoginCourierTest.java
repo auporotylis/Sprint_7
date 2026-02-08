@@ -1,10 +1,11 @@
+import io.qameta.allure.Description;
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.apache.http.HttpStatus.*;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -21,11 +22,10 @@ public class LoginCourierTest {
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru";
         login = "CourierLogin" + System.currentTimeMillis();
         password = "password123";
         CreateCourier courier = new CreateCourier(login, password, "Dasha");
-        Steps.creatingCourier(courier).then().log().all().statusCode(201).extract().response();
+        Steps.creatingCourier(courier).then().log().all().statusCode(SC_CREATED).extract().response();
     }
     @After
     public void tearDown() {
@@ -39,67 +39,72 @@ public class LoginCourierTest {
 
     @Test
     @DisplayName("Курьер может авторизоваться")
-    public void logInCourier() {
+    @Description("Проверка успешной авторизации курьера с существующим набором данных")
+    public void logInCourierTest() {
         LoginCourier courier = new LoginCourier(login, password);
         Steps.loginCourier(courier).then()
                 .log().all()
-                .statusCode(200)
+                .statusCode(SC_OK)
                 .body(paramId, notNullValue())
                 .extract().response();
     }
 
     @Test
     @DisplayName("Курьер не может авторизоваться без логина")
-    public void courierCannotLogInWithoutLogin() {
+    @Description("Проверка возникновения ошибки при попытке авторизации курьера без логина")
+    public void courierCannotLogInWithoutLoginTest() {
         LoginCourier courier = new LoginCourier("", password);
         Steps.loginCourier(courier).then()
                 .log().all()
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .body(paramMessage, equalTo(notEnoughDataError));
     }
 
     @Test
     @DisplayName("Курьер не может авторизоваться без пароля")
-    public void courierCannotLogInWithoutPassword() {
+    @Description("Проверка возникновения ошибки при попытке авторизации курьера без пароля")
+    public void courierCannotLogInWithoutPasswordTest() {
         LoginCourier courier = new LoginCourier(login, "");
         Steps.loginCourier(courier).then()
                 .log().all()
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .body(paramMessage, equalTo(notEnoughDataError));
     }
 
     @Test
     @DisplayName("Курьер не может авторизоваться с ошибкой в логине")
-    public void courierCannotLogInWithWrongLogin() {
+    @Description("Проверка возникновения ошибки при попытке авторизации курьера с ошибкой в логине")
+    public void courierCannotLogInWithWrongLoginTest() {
         String wrongLogin = login + "a";
         LoginCourier courier = new LoginCourier(wrongLogin, password);
         Steps.loginCourier(courier).then()
                 .log().all()
-                .statusCode(404)
+                .statusCode(SC_NOT_FOUND)
                 .body(paramMessage, equalTo(accountNotFoundError));
     }
 
     @Test
     @DisplayName("Курьер не может авторизоваться с ошибкой в пароле")
-    public void courierCannotLogInWithWrongPassword() {
+    @Description("Проверка возникновения ошибки при попытке авторизации курьера с ошибкой в пароле")
+    public void courierCannotLogInWithWrongPasswordTest() {
         String wrongPassword = password + "a";
         LoginCourier courier = new LoginCourier(login, wrongPassword);
         Steps.loginCourier(courier).then()
                 .log().all()
-                .statusCode(404)
+                .statusCode(SC_NOT_FOUND)
                 .body(paramMessage, equalTo(accountNotFoundError));
     }
 
     @Test
     @DisplayName("Успешный запрос возвращает id")
-    public void successLogInReturnCourierId() {
+    @Description("Проверка возвращения id курьера при успешном запросе")
+    public void successLogInReturnCourierIdTest() {
         LoginCourier courier = new LoginCourier(login, password);
         Response loginCourier = Steps.loginCourier(courier).then()
                 .log().all()
-                .statusCode(200)
+                .statusCode(SC_OK)
                 .body(paramId, notNullValue())
                 .extract().response();
         id = Steps.getCourierId(loginCourier);
     }
-
 }
